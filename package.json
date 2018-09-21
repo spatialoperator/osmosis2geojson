@@ -1,0 +1,17 @@
+{
+  "name": "osmosis2geojson",
+  "version": "0.1.0",
+  "description": "Converts from Osmosis polygon filter file format to GeoJSON format",
+  "main": "osmosis2geojson.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "geojson",
+    "osmosis",
+    "poly"
+  ],
+  "author": "spatialoperator",
+  "license": "ISC",
+  "repository": "github:spatialoperator/osmosis2geojson"
+}
