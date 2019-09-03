@@ -13,5 +13,9 @@
   ],
   "author": "spatialoperator",
   "license": "ISC",
-  "repository": "github:spatialoperator/osmosis2geojson"
+  "repository": "github:spatialoperator/osmosis2geojson",
+  "dependencies": {
+    "fs-extra": "^8.1.0",
+    "line-reader": "^0.4.0"
+  }
 }

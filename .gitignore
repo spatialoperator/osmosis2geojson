@@ -1,2 +1,7 @@
-*.log
 node_modules/
+*.geojson
+*.json
+*.poly
+*.csv
+*.log
+*.tsv

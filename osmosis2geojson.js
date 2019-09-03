@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 "use strict";
 
+const fse = require('fs-extra');
+const lineReader = require('line-reader');
+
 const PRECISION = 12;  // Precision for floating point comparison
 
 const END = "END"; // End marker in Osmosis polygon filter file
@@ -8,10 +11,6 @@ const SUBTRACT = "!"; // Subtract marker in Osmosis polygon filter file
 
 const POLYGON = "Polygon"; // GeoJSON Polygon type indicator
 const MULTIPOLYGON = "MultiPolygon"; // GeoJSON MultiPolygon type indicator
-
-let async = require('async');
-let fse = require('fs-extra');
-let lineReader = require('line-reader');
 
 // Converts from Osmosis polygon format to GeoJSON format.
 // Implementation loosely modelled on the strategy pattern (abstract example below)
@@ -22,6 +21,12 @@ let lineReader = require('line-reader');
 //  else log error and return null
 //}
 
+/**
+ * Initial file examiner function; updates GeoJSON object and returns polygon Examiner
+ * @param {String} inLine
+ * @param {Object} gjObj
+ * @returns {Function}
+ */
 function fileExaminer(inLine, gjObj) {
   if (inLine) {
     gjObj.properties.name = inLine;
@@ -32,6 +37,12 @@ function fileExaminer(inLine, gjObj) {
   }
 }
 
+/**
+ * End examiner function; updates GeoJSON object and returns polygon Examiner or end Examiner
+ * @param {String} inLine
+ * @param {Object} gjObj
+ * @returns {Function}
+ */
 function endExaminer(inLine, gjObj) {
   if (inLine === END) {
     return endExaminer;
@@ -53,6 +64,12 @@ function endExaminer(inLine, gjObj) {
   }
 }
 
+/**
+ * Polygon examiner function; updates GeoJSON object and returns coordinate Examiner or end Examiner
+ * @param {String} inLine
+ * @param {Object} gjObj
+ * @returns {Function}
+ */
 function polygonExaminer(inLine, gjObj) {
   if (inLine === END) {
     return endExaminer;
@@ -75,6 +92,12 @@ function polygonExaminer(inLine, gjObj) {
   }
 }
 
+/**
+ * Coordinate examiner function; updates GeoJSON object and returns coordinate Examiner, end Examiner or polygon Examiner
+ * @param {String} inLine
+ * @param {Object} gjObj
+ * @returns {Function}
+ */
 function coordinateExaminer(inLine, gjObj) {
   if (inLine === END) {
     if (!ensureClosingCoordinates(gjObj)) {
@@ -101,6 +124,12 @@ function coordinateExaminer(inLine, gjObj) {
   }
 }
 
+/**
+ * Reads a coordinate pair from the given file line and updates GeoJSON object; returns true if a coordinate pair was read
+ * @param {String} fileLine
+ * @param {Object} gjObj
+ * @returns {Boolean}
+ */
 function readCoordinatePair(fileLine, gjObj) {
   let result = false;
   let splitLine = fileLine.split(/  +/g, 3); // Ignore the first element in the array
@@ -122,6 +151,11 @@ function readCoordinatePair(fileLine, gjObj) {
   return result;
 }
 
+/**
+ * Ensures that the GeoJSON object has closing coordinates; returns true if successful
+ * @param {Object} gjObj
+ * @returns {Boolean}
+ */
 function ensureClosingCoordinates(gjObj) {
   let result = false;
   let ring = null;
@@ -144,7 +178,12 @@ function ensureClosingCoordinates(gjObj) {
   return result;
 }
 
-function asyncReadLines(polyFilePath, callback) {
+/**
+ * Reads the lines in the specified polygon file; returns as a Promise
+ * @param {String} polyFilePath
+ * @returns {Promise}
+ */
+function readLines(polyFilePath) {
   let examiner = fileExaminer;
   let gjObj = {
     "type": "Feature",
@@ -154,39 +193,38 @@ function asyncReadLines(polyFilePath, callback) {
     },
     "properties": {}
   };
-  
-  lineReader.eachLine(polyFilePath, function(line, last) {
-    examiner = examiner(line, gjObj);
-    if (!examiner) {
-      callback(new Error("Processing terminated"), null);
-    } else {
-      if (last) {
-        callback(null, gjObj);
+
+  return new Promise((resolve, reject) => {
+    lineReader.eachLine(polyFilePath, function(line, last) {
+      examiner = examiner(line, gjObj);
+      if (!examiner) {
+        reject(new Error("Processing terminated"));
+      } else {
+        if (last) {
+          resolve(gjObj);
+        }
       }
-    }
+    });
   });
 }
 
-async.waterfall([
-  function(callback) {
-    if (process.argv[2]) {
-      let polyFilePath = process.argv[2];
-      if (fse.existsSync(polyFilePath)) {
-        asyncReadLines(polyFilePath, callback);
-      } else {
-        callback(new Error("File not found"));
-      }
-    } else {
-      callback(new Error("No file specified"));
-    }
-  }],
-  function (err, result) {
-    if (err) {
+// Main - check parameters and start line reading process for specified polygon file
+if (process.argv[2]) {
+  let polyFilePath = process.argv[2];
+  if (fse.existsSync(polyFilePath)) {
+    readLines(polyFilePath)
+    .then(result => {
+      console.log(JSON.stringify(result));
+    })
+    .catch(err => {
       console.error(err.message);
       process.exit(1);
-    } else {
-      console.log(JSON.stringify(result));
-      process.exit();
-    }
+    });
+  } else {
+    console.error("File not found");
+    process.exit(1);
   }
-);
+} else {
+  console.error("No file specified");
+  process.exit(1);
+}

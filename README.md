@@ -22,7 +22,6 @@ The Osmosis polygon format allows for several files to be combined to form a mul
 
 * [line-reader](https://github.com/nickewing/line-reader)
 * [fs-extra](https://github.com/jprichardson/node-fs-extra)
-* [async](https://caolan.github.io/async/docs.html)
 
 ### Authors
 
