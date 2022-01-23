@@ -6,6 +6,7 @@ Converts from [Osmosis polygon filter file format](https://wiki.openstreetmap.or
 
 ```
 git clone https://github.com/spatialoperator/osmosis2geojson.git
+cd osmosis2geojson
 npm install osmosis2geojson
 ```
 
