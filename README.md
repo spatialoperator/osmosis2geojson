@@ -4,7 +4,11 @@ Converts from [Osmosis polygon filter file format](https://wiki.openstreetmap.or
 
 ### Install
 
-`npm install osmosis2geojson`
+```
+git clone https://github.com/spatialoperator/osmosis2geojson.git
+cd osmosis2geojson
+npm install osmosis2geojson
+```
 
 ### Usage
 
